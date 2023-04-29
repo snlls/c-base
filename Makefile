@@ -1,6 +1,6 @@
-ARCH=x64
+ARCH ?= x64
 CC ?= gcc
-LINKER ?= gcc
+LINKER ?= $(CC)
 STD = -std=c11
 PREFIX ?= /usr/local
 
@@ -11,27 +11,28 @@ OBJECTS=$(SOURCES:$(SRC_DIR)/%.c=$(OBJ_DIR)/%.o)
 
 EXE=exe
 
-SYSLIBS=
-SLIBS := $(wildcard slib/*)
+CFLAGS :=  $(STD) -DDEBUG -g -Wall -Iinclude -Wno-unused-function -Wno-unused-variable
 
-ALIBS := $(wildcard slib/*/$(ARCH)/*.a)
+release: CFLAGS := $(filter-out -DDEBUG -g, $(CFLAGS))
+
+
+SYSLIBS=
 
 LDFLAGS += $(foreach lib, $(SYSLIBS), $(shell pkg-config --libs $(lib)))
-#$(info $$LDFLAGS is [${MAKEFLAGS}])
-
-CFLAGS := $(STD) -g -Wall -Iinclude -Wno-unused-function -Wno-unused-variable
-
-release: CFLAGS := $(filter-out -g, $(CFLAGS))
-
 CFLAGS += $(foreach lib, $(SYSLIBS), $(shell pkg-config --cflags $(lib)))
 
-CFLAGS += $(foreach lib, $(SLIBS), -Ideps/$(lib))
+SLIBS := $(wildcard slib/*)
+ALIBS := $(wildcard slib/*/$(ARCH)/*.a)
+
+#$(info $$CFLAGS is [${CFLAGS}])
+
+CFLAGS += $(foreach lib, $(SLIBS), -Islib/$(lib))
 
 LIBSOURCES += $(wildcard slib/*/*.c)
-
 OBJECTS += $(LIBSOURCES:slib/%.c=$(OBJ_DIR)/%.o)
 
 DEPS=$(OBJECTS:.o=.d)
+
 
 ifeq ($(CC),tcc)
 	DEPFLAGS:=-MD

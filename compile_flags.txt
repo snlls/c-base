@@ -1,4 +1,6 @@
 -I
 include
+-I
+slib
 --std
 gnu11
